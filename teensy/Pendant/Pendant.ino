@@ -92,17 +92,14 @@ Bounce button_stop = Bounce(PIN_BTN_STOP, 10);
 Bounce button_feed = Bounce(PIN_BTN_FEED, 10);
 Bounce button_m1 = Bounce(PIN_BTN_M1, 10);
 
-
 Timer t;
 struct s_indicator g_indicators[INDICATOR_COUNT];
 
 byte buffer[64];
 
-
 void setup() {
   Serial.begin(9600);
   Serial2.begin(9600);
-
   
   pinMode(PIN_BTN_START, INPUT_PULLUP);
   pinMode(PIN_BTN_STOP, INPUT_PULLUP);
@@ -173,7 +170,6 @@ void set_indicator(int idx, int state, int period=0)
         i.state = INDICATOR_PULSE;
       }
       break;
-    
   }
 }
 
@@ -182,7 +178,6 @@ void set_indicator(int idx, int state, int period=0)
 #define RFID_STATE_GET_BYTES 1
 #define RFID_STATE_GET_CKSUM 2
 #define RFID_STATE_WAIT_ETX 3
-#define RFID_STATE_REPORT 4
 
 void rfid_poll()
 {
@@ -237,18 +232,14 @@ void rfid_poll()
 
         case RFID_STATE_WAIT_ETX:
           if (b == 0x03) {
-            rfid_state = RFID_STATE_REPORT;
-          } else {
-            rfid_state = RFID_STATE_WAIT_STX;        
+            // got ETX
+            Serial.print(0x02, BYTE); // send STX
+            for (n=0; n<10; n++) {
+              Serial.print(rfid_buffer[n], BYTE); // send 10 hex digits
+            }
+            Serial.print(0x03, BYTE); // send ETX
           }
-          break;
-        case RFID_STATE_REPORT:
-          Serial.print(0x02, BYTE); // send STX
-          for (n=0; n<10; n++) {
-            Serial.print(rfid_buffer[n], BYTE); // send 10 hex digits
-          }
-          Serial.print(0x03, BYTE); // send ETX
-          rfid_state = RFID_STATE_WAIT_STX;
+          rfid_state = RFID_STATE_WAIT_STX;        
           break;
       }
   }
@@ -295,7 +286,6 @@ void button_poll()
     Keyboard.set_key1(0);
     Keyboard.send_now();
   }
-
   
   if (button_m1.fallingEdge()) {
     Keyboard.set_modifier(MODIFIERKEY_ALT);
@@ -310,7 +300,6 @@ void button_poll()
     Keyboard.set_modifier(0);
     Keyboard.send_now();
   }
-  
 }
 
 void rawhid_poll()
@@ -361,7 +350,6 @@ void rawhid_poll()
       set_indicator(INDICATOR_LED_FEED, INDICATOR_OFF);
     }
 
-
     // send packet in response to the poll
     for (int i=0; i<63; i++) {
       buffer[i] = 0x00;
@@ -392,7 +380,6 @@ void rawhid_poll()
       set_indicator(INDICATOR_BEACON_AMBER, INDICATOR_ON);
     }
 
-
     // and put a count of packets sent at the end
     buffer[62] = highByte(packetCount);
     buffer[63] = lowByte(packetCount);
@@ -401,22 +388,7 @@ void rawhid_poll()
       packetCount = packetCount + 1;
     }
   }
- 
 }
-
-
-/*
-void encoder_poll()
-{
-  static long last_maxvel = -1;
-  long maxvel;
-  maxvel = encoder_maxvel.read();
-  if (last_maxvel != maxvel) {
-    Serial.println(maxvel);
-    last_maxvel = maxvel;
-  }
-}
-*/
 
 void loop() 
 {
