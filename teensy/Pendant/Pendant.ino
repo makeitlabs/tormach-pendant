@@ -1,3 +1,37 @@
+// -------------------------------------------------------------------------------------------------------
+// Teensy LC based USB pendant for Tormach PathPilot
+// R&D by Steve Richardson (steve.richardson@makeitlabs.com) - December 2016
+//
+// adds:
+//   - physical CYCLE START, FEED HOLD, STOP, M01 BREAK buttons
+//   - physical MAXVEL rotary encoder for better control of speeds when proving new G-Code
+//   - LED feedback for state of FEED HOLD, M01 BREAK, CYCLE START
+//   - stack light support for up to 4 lights (BLUE/GREEN/YELLOW/RED) - e.g. error, cycle start, etc.
+//   - RFID reader interface for access control
+//
+// to be useful, requires a number of changes to PathPilot itself, covered elsewhere in this repository
+//
+// 
+// builds on Arduino 1.8.5 and Teensyduino 1.40 with a modification to boards.txt
+// also requires Timer library from https://github.com/JChristensen/Timer to be installed in Arduino libraries folder
+//
+// you must add a new type of USB endpoint called USB_EVERYTHING in the Teensy boards.txt file
+// e.g. C:\Program Files (x86)\Arduino\hardware\teensy\avr\boards.txt
+//
+// This file will be read-only and you will need administrator access to edit/overwrite it.
+// Restart the Arduino IDE once you've made this change and double check Tools->USB Type and make sure
+// it shows "All The Things" (or whatever you named it)
+//
+//    teensyLC.menu.usb.flightsim=Flight Sim Controls
+//    teensyLC.menu.usb.flightsim.build.usbtype=USB_FLIGHTSIM
+//    teensyLC.menu.usb.flightsim.fake_serial=teensy_gateway
+// >> teensyLC.menu.usb.rawhid=All The Things
+// >> teensyLC.menu.usb.rawhid.build.usbtype=USB_EVERYTHING
+//    teensyLC.menu.usb.disable=No USB
+//    teensyLC.menu.usb.disable.build.usbtype=USB_DISABLED
+//
+// -------------------------------------------------------------------------------------------------------
+
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include <Encoder.h>
@@ -209,10 +243,11 @@ void rfid_poll()
           }
           break;
         case RFID_STATE_REPORT:
+          Serial.print(0x02, BYTE); // send STX
           for (n=0; n<10; n++) {
-            Serial.print(rfid_buffer[n], BYTE);
+            Serial.print(rfid_buffer[n], BYTE); // send 10 hex digits
           }
-          Serial.println("");
+          Serial.print(0x03, BYTE); // send ETX
           rfid_state = RFID_STATE_WAIT_STX;
           break;
       }
