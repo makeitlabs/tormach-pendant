@@ -62,7 +62,7 @@
 Encoder encoder_maxvel(PIN_ENCODER_A, PIN_ENCODER_B);
 
 enum indicator_t {
-  INDICATOR_BEACON_BLUE,
+  ALERT_BEEPER,
   INDICATOR_BEACON_GREEN,
   INDICATOR_BEACON_AMBER,
   INDICATOR_BEACON_RED,
@@ -93,6 +93,7 @@ Bounce button_feed = Bounce(PIN_BTN_FEED, 10);
 Bounce button_m1 = Bounce(PIN_BTN_M1, 10);
 
 Timer t;
+Timer alert_t;
 struct s_indicator g_indicators[INDICATOR_COUNT];
 
 byte buffer[64];
@@ -107,7 +108,7 @@ void setup() {
   pinMode(PIN_BTN_M1, INPUT_PULLUP);
 
 
-  init_indicator(INDICATOR_BEACON_BLUE, PIN_BEACON_BLUE, LOW);
+  init_indicator(ALERT_BEEPER, PIN_BEACON_BLUE, LOW);
   init_indicator(INDICATOR_BEACON_GREEN, PIN_BEACON_GREEN, LOW);
   init_indicator(INDICATOR_BEACON_AMBER, PIN_BEACON_AMBER, LOW);
   init_indicator(INDICATOR_BEACON_RED, PIN_BEACON_RED, LOW);
@@ -302,9 +303,17 @@ void button_poll()
   }
 }
 
+void alert_off()
+{
+  // turn off alert
+  set_indicator(ALERT_BEEPER, INDICATOR_OFF);
+}
+
 void rawhid_poll()
 {
   static unsigned int packetCount = 0;
+  static unsigned int run_state = -1;
+  static unsigned int last_run_state = -1;
   int pathpilot_maxvel = 0;
   int maxvel = 0;
   byte maxvel_lut[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 25, 50, 75, 100};
@@ -316,14 +325,25 @@ void rawhid_poll()
     if (buffer[0] == 0x01) {
       set_indicator(INDICATOR_BEACON_GREEN, INDICATOR_ON);
       set_indicator(INDICATOR_LED_START, INDICATOR_ON);
+      run_state = 1;
     } else if (buffer[0] == 0x02) {
       set_indicator(INDICATOR_BEACON_GREEN, INDICATOR_BLINK, 500);
       set_indicator(INDICATOR_LED_START, INDICATOR_BLINK, 500);
+      run_state = 2;
     } else {
       set_indicator(INDICATOR_BEACON_GREEN, INDICATOR_OFF);
       set_indicator(INDICATOR_LED_START, INDICATOR_OFF);
+      run_state = 0;
     }
 
+    if ( last_run_state != 1 && run_state == 1 ) {
+      // turn on alert for 5 seconds if going from paused or stopped to running
+      set_indicator(ALERT_BEEPER, INDICATOR_ON);
+      alert_t.after(5000, alert_off);      
+    }
+
+    last_run_state = run_state;
+    
     // state-alarm
     if (buffer[1] == 0x01) {
       set_indicator(INDICATOR_BEACON_RED, INDICATOR_ON);
@@ -394,6 +414,7 @@ void loop()
 {
   
   t.update();
+  alert_t.update();
   rfid_poll();  
   button_poll();
   rawhid_poll();
