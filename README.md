@@ -28,17 +28,21 @@ steve@ubuntu-22:~$ tar xvJf Downloads/arduino-1.8.19-linux64.tar.xz
 steve@ubuntu-22:~$ mv arduino-1.8.19 arduino-tormach
 ```
     
-#### Install the TeensyDuino add-ons from https://www.pjrc.com/teensy/td_download.html
+#### Download and install the Teensyduino add-ons from https://www.pjrc.com/teensy/td_download.html
   
 ```
+steve@ubuntu-22:~$ wget https://www.pjrc.com/teensy/td_157/TeensyduinoInstall.linux64 -P ~/Downloads
+
 steve@ubuntu-22:~$ chmod 755 ~/Downloads/TeensyduinoInstall.linux64 
+
 steve@ubuntu-22:~$ ~/Downloads/TeensyduinoInstall.linux64 
 ```
-The Teensyduino installer will ask for your Arduino folder.  Make sure you point it to the one you just extracted and renamed above.
+
+The Teensyduino installer will ask for your Arduino folder.  *Make sure you point it to the one you just extracted and renamed above.*
 
 ![image](https://user-images.githubusercontent.com/3910098/219883972-9329ee76-fa88-4ee0-bb4b-a420d9fd2e3d.png)
   
-#### Move aside the installed cores files and clone https://github.com/makeitlabs/teensyduino-cores (branch tormach-controls) in its place.  Be sure to check out that repo into the `cores` directory.
+#### Move aside the installed cores files and clone https://github.com/makeitlabs/teensyduino-cores *branch tormach-controls* in its place.  Be sure to clone that repo into the `cores` directory.
 
 ```
 steve@ubuntu-22:~$ cd ~/arduino-tormach/hardware/teensy/avr
@@ -46,7 +50,6 @@ steve@ubuntu-22:~$ cd ~/arduino-tormach/hardware/teensy/avr
 steve@ubuntu-22:~/arduino-tormach/hardware/teensy/avr$ mv cores cores.orig
 
 steve@ubuntu-22:~/arduino-tormach/hardware/teensy/avr$ git clone -b tormach-controls https://github.com/makeitlabs/teensyduino-cores cores
-
 ```
  
 #### Clone this repository to your Arduino projects folder.
@@ -56,7 +59,7 @@ steve@ubuntu-22:~$ cd ~/Arduino/
 steve@ubuntu-22:~/Arduino$ git clone https://github.com/makeitlabs/tormach-pendant
 ```
 
-#### Back up the installed `boards.txt` file and replace it with the one in this repository
+#### Back up the installed Teensyduino `boards.txt` file and replace it with the one in this repository
 
 ```
 steve@ubuntu-22:~/Arduino$ cd ~/arduino-tormach/hardware/teensy/avr
@@ -90,10 +93,17 @@ If these options don't show up, something likely went wrong with your install pr
 
 ![image](https://user-images.githubusercontent.com/3910098/219884461-3bc4e85e-fb3d-4055-821a-4b9b5a7a466e.png)
 
+#### Avoid the Updates pitfall
+
+The Arduino evironment will helpfully try to suggest upgrading your libraries.  *Don't do this, as it will overwrite the customized version you installed.*  This will happen every time you start the Arduino environment, so watch out in the future.
+
+![image](https://user-images.githubusercontent.com/3910098/219884913-85347b30-ef89-4e3f-80a3-3c2df11bf69d.png)
   
 ### Hardware Pinout
 
-(This is based on the legacy hardware for the time being)
+![image](https://www.pjrc.com/teensy/teensylc_front_pinout.png)
+
+(This mapping is based on the legacy hardware with some additions, subject to change)
 
 | Pin name | Pin number |
 |----------|------------|
@@ -105,14 +115,14 @@ If these options don't show up, something likely went wrong with your install pr
 | PIN_BTN_STOP | 6 |
 | PIN_BTN_FEED | 7 |
 | PIN_BTN_M1 | 8 |
+| PIN_BTN_FOV | 10 |
+| PIN_BTN_SOV | 18 |
 | PIN_ENCODER_A | 11 |
 | PIN_ENCODER_B | 12 |
+| PIN_JOG_A | 14 |
+| PIN_JOG_B | 15 |
 | PIN_LED_START | 5 |
 | PIN_LED_FEED | 16 |
 | PIN_LED_M1 | 17 |
 | PIN_LED_RFID | 21 |
-
-
-  
-  
 
