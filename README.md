@@ -17,14 +17,77 @@ The firmware builds using Teensyduino, the Arduino environment wrapper for the T
 
 This firmware was developed using the Linux version of the Arduino environment, but it should be possible to use any of the supported platforms with some changes to the process.
 
-  - Extract "Legacy" Arduino 1.8.x into a directory specifically for this project, since the "cores" files will be modified.
-  - Install the TeensyDuino add-ons from https://www.pjrc.com/teensy/td_download.html
-  - Move aside the installed cores files and clone https://github.com/makeitlabs/teensyduino-cores (branch tormach-controls) in its place.  Be sure to check out that repo into the `cores` directory.
-  - Back up the installed `boards.txt` file and replace it with the one in this repository
-  - Clone this repo into your Arduino projects directory
-  - Open the `.ino` file in the new modified Arduino environment
-  - Select "Teensy LC" for the board and "Tormach Controls" for the USB type
-  - Build code and program the Teensy
+#### Extract "Legacy" Arduino 1.8.x and rename the extracted directory to denote that it is modified for this purpose, since the Teensy "cores" files will be modified.
+
+```
+steve@ubuntu-22:~$ cd
+steve@ubuntu-22:~$ tar xvJf Downloads/arduino-1.8.19-linux64.tar.xz   
+
+[tar output...]
+
+steve@ubuntu-22:~$ mv arduino-1.8.19 arduino-tormach
+```
+    
+#### Install the TeensyDuino add-ons from https://www.pjrc.com/teensy/td_download.html
+  
+```
+steve@ubuntu-22:~$ chmod 755 ~/Downloads/TeensyduinoInstall.linux64 
+steve@ubuntu-22:~$ ~/Downloads/TeensyduinoInstall.linux64 
+```
+The Teensyduino installer will ask for your Arduino folder.  Make sure you point it to the one you just extracted and renamed above.
+
+![image](https://user-images.githubusercontent.com/3910098/219883972-9329ee76-fa88-4ee0-bb4b-a420d9fd2e3d.png)
+  
+#### Move aside the installed cores files and clone https://github.com/makeitlabs/teensyduino-cores (branch tormach-controls) in its place.  Be sure to check out that repo into the `cores` directory.
+
+```
+steve@ubuntu-22:~$ cd ~/arduino-tormach/hardware/teensy/avr
+
+steve@ubuntu-22:~/arduino-tormach/hardware/teensy/avr$ mv cores cores.orig
+
+steve@ubuntu-22:~/arduino-tormach/hardware/teensy/avr$ git clone -b tormach-controls https://github.com/makeitlabs/teensyduino-cores cores
+
+```
+ 
+#### Clone this repository to your Arduino projects folder.
+  
+```
+steve@ubuntu-22:~$ cd ~/Arduino/
+steve@ubuntu-22:~/Arduino$ git clone https://github.com/makeitlabs/tormach-pendant
+```
+
+#### Back up the installed `boards.txt` file and replace it with the one in this repository
+
+```
+steve@ubuntu-22:~/Arduino$ cd ~/arduino-tormach/hardware/teensy/avr
+steve@ubuntu-22:~/arduino-tormach/hardware/teensy/avr$ mv boards.txt board.txt.orig
+steve@ubuntu-22:~/arduino-tormach/hardware/teensy/avr$ cp ~/Arduino/tormach-pendant/boards.txt .
+```  
+
+ #### Run the modified Arduino environment and open the `.ino` file
+ 
+ ```
+ steve@ubuntu-22:~$ ~/arduino-tormach/arduino &
+ ```
+ 
+ ![image](https://user-images.githubusercontent.com/3910098/219884396-4e8c2760-8ab4-416f-aa1f-c5dbd013fb82.png)
+ 
+#### Select "Teensy LC" for the board and "Tormach Controls" for the USB type
+
+*Board: Teensy LC*
+![image](https://user-images.githubusercontent.com/3910098/219884416-b5441523-fe33-47b2-9b21-87de2bc50a26.png)
+
+* USB Type: Tormach Controller*
+![image](https://user-images.githubusercontent.com/3910098/219884424-88351b5b-6654-47a8-81f6-3f614dd22331.png)
+
+If these options don't show up, something likely went wrong with your install process above.
+
+#### Build code and program the Teensy
+
+![image](https://user-images.githubusercontent.com/3910098/219884452-74b3f32e-4bc4-42b5-b64d-4e969ad89050.png)
+
+![image](https://user-images.githubusercontent.com/3910098/219884461-3bc4e85e-fb3d-4055-821a-4b9b5a7a466e.png)
+
   
 ### Hardware Pinout
 
