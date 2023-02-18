@@ -64,8 +64,8 @@ void setup()
 
   //pinMode(PIN_ENCODER_A, INPUT_PULLUP);
   //pinMode(PIN_ENCODER_B, INPUT_PULLUP);
-  pinMode(PIN_JOG_A, INPUT_PULLUP);
-  pinMode(PIN_JOG_B, INPUT_PULLUP);
+  //pinMode(PIN_JOG_A, INPUT_PULLUP);
+  //pinMode(PIN_JOG_B, INPUT_PULLUP);
   
   pinMode(PIN_LED_START, OUTPUT);
   pinMode(PIN_LED_FEED, OUTPUT);
@@ -90,7 +90,7 @@ void setup()
   Tormach.useManualSend(true);
 
   encoder.write(500);
-  jog.write(0);
+  jog.write(1);
 }
 
 bool led_poll()
@@ -167,13 +167,15 @@ bool button_poll()
 bool encoder_poll()
 { 
   static uint8_t last_enc_val_idx = 255;
+  
   static int16_t last_jog_val = -1;
   int16_t enc_val, jog_val;
+  
   bool updated = false;
   
   if (enc_val_idx != last_enc_val_idx) {
     encoder.write(enc_vals[enc_val_idx]);
-    Serial.println(String("enc_val_idx: ") + enc_val_idx);
+    //Serial.println(String("enc_val_idx: ") + enc_val_idx);
   }
   last_enc_val_idx = enc_val_idx;
 
@@ -188,16 +190,17 @@ bool encoder_poll()
   if (enc_vals[enc_val_idx] != enc_val) {
     enc_vals[enc_val_idx] = enc_val;
     updated = true;
-    Serial.println(String("enc: ") + enc_val);
+    //Serial.println(String("enc: ") + enc_val);
   }
 
 
   jog_val = jog.read();
-  if (last_jog_val != last_jog_val) {
+  
+  if (last_jog_val != jog_val) {
+    last_jog_val = jog_val;
     updated = true;
-    Serial.println(String("jog: ") + jog_val);
+    //Serial.println(String("jog: ") + jog_val);
   }
-  last_jog_val = jog_val;
 
 
   // 0 - ABS_X - feed-override - "F%" confirmed
