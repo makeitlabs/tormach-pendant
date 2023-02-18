@@ -75,9 +75,11 @@ steve@ubuntu-22:~/arduino-tormach/hardware/teensy/avr$ cp ~/Arduino/tormach-pend
 #### Select "Teensy LC" for the board and "Tormach Controls" for the USB type
 
 *Board: Teensy LC*
+
 ![image](https://user-images.githubusercontent.com/3910098/219884416-b5441523-fe33-47b2-9b21-87de2bc50a26.png)
 
-* USB Type: Tormach Controller*
+*USB Type: Tormach Controller*
+
 ![image](https://user-images.githubusercontent.com/3910098/219884424-88351b5b-6654-47a8-81f6-3f614dd22331.png)
 
 If these options don't show up, something likely went wrong with your install process above.
