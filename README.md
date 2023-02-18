@@ -51,7 +51,9 @@ steve@ubuntu-22:~/arduino-tormach/hardware/teensy/avr$ mv cores cores.orig
 
 steve@ubuntu-22:~/arduino-tormach/hardware/teensy/avr$ git clone -b tormach-controls https://github.com/makeitlabs/teensyduino-cores cores
 ```
- 
+
+Note: alternately, use SSH to clone if you're going to be editing the repo, e.g. `git clone -b tormach-controls git@github.com:makeitlabs/teensyduino-cores.git cores`
+
 #### Clone this repository to your Arduino projects folder.
   
 ```
@@ -59,7 +61,9 @@ steve@ubuntu-22:~$ cd ~/Arduino/
 steve@ubuntu-22:~/Arduino$ git clone https://github.com/makeitlabs/tormach-pendant
 ```
 
-#### Back up the installed Teensyduino `boards.txt` file and replace it with the one in this repository
+Note: alternately, use SSH to clone if you're going to be editing the repo, e.g. `git clone git@github.com:makeitlabs/tormach-pendant.git`
+
+#### Back up the installed Teensyduino `boards.txt` file and replace it with the one cloned from this repository
 
 ```
 steve@ubuntu-22:~/Arduino$ cd ~/arduino-tormach/hardware/teensy/avr
