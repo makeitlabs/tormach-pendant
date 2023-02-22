@@ -17,7 +17,7 @@
 #define PIN_BTN_START 4
 #define PIN_BTN_STOP 6
 #define PIN_BTN_FEED 7
-#define PIN_BTN_M1 8
+#define PIN_BTN_STATUS 8
 
 #define PIN_BTN_FOV 10
 #define PIN_BTN_SOV 18
@@ -30,7 +30,7 @@
 
 #define PIN_LED_START 5
 #define PIN_LED_FEED 16
-#define PIN_LED_M1 17
+#define PIN_LED_STATUS 17
 #define PIN_LED_RFID 21
 
 Encoder encoder(PIN_ENCODER_A, PIN_ENCODER_B);
@@ -39,11 +39,11 @@ Encoder jog(PIN_JOG_A, PIN_JOG_B);
 Bounce button_start = Bounce(PIN_BTN_START, 10);
 Bounce button_stop = Bounce(PIN_BTN_STOP, 10);
 Bounce button_feed = Bounce(PIN_BTN_FEED, 10);
-Bounce button_m1 = Bounce(PIN_BTN_M1, 10);
+Bounce button_status = Bounce(PIN_BTN_STATUS, 10);
 Bounce button_fov = Bounce(PIN_BTN_FOV, 10);
 Bounce button_sov = Bounce(PIN_BTN_SOV, 10);
 
-static bool b_start = false, b_stop = false, b_feed = false, b_m1 = false, b_fov = false, b_sov = false;
+static bool b_start = false, b_stop = false, b_feed = false, b_status = false, b_fov = false, b_sov = false;
 
 static uint16_t enc_vals[3] = { 999, 500, 500 };
 static uint8_t enc_val_idx = 0;
@@ -58,7 +58,7 @@ void setup()
   pinMode(PIN_BTN_START, INPUT_PULLUP);
   pinMode(PIN_BTN_STOP, INPUT_PULLUP);
   pinMode(PIN_BTN_FEED, INPUT_PULLUP);
-  pinMode(PIN_BTN_M1, INPUT_PULLUP);
+  pinMode(PIN_BTN_STATUS, INPUT_PULLUP);
   pinMode(PIN_BTN_FOV, INPUT_PULLUP);
   pinMode(PIN_BTN_SOV, INPUT_PULLUP);
 
@@ -69,7 +69,7 @@ void setup()
   
   pinMode(PIN_LED_START, OUTPUT);
   pinMode(PIN_LED_FEED, OUTPUT);
-  pinMode(PIN_LED_M1, OUTPUT);
+  pinMode(PIN_LED_STATUS, OUTPUT);
   pinMode(PIN_LED_RFID, OUTPUT);
   pinMode(PIN_BEACON_GREEN, OUTPUT);
   pinMode(PIN_BEACON_AMBER, OUTPUT);
@@ -78,7 +78,7 @@ void setup()
 
   digitalWrite(PIN_LED_START, 1);
   digitalWrite(PIN_LED_FEED, 1);
-  digitalWrite(PIN_LED_M1, 1);
+  digitalWrite(PIN_LED_STATUS, 1);
   digitalWrite(PIN_LED_RFID, 1);
   
   digitalWrite(PIN_BEACON_GREEN, 1);
@@ -108,9 +108,9 @@ bool led_poll()
      
     digitalWrite(PIN_LED_START, !(leds & 0x01));
     digitalWrite(PIN_LED_RFID, !(leds & 0x02));
-    digitalWrite(PIN_BEACON_BLUE, !(leds & 0x10));
-    digitalWrite(PIN_BEACON_GREEN, !(leds & 0x08));
     digitalWrite(PIN_BEACON_RED, !(leds & 0x04));
+    digitalWrite(PIN_BEACON_GREEN, !(leds & 0x08));
+    digitalWrite(PIN_BEACON_BLUE, !(leds & 0x10));
 
     return true;
   }
@@ -124,16 +124,49 @@ bool button_poll()
   button_start.update();
   button_stop.update();
   button_feed.update();
-  button_m1.update();
+  button_status.update();
   button_fov.update();
   button_sov.update();
   
   if (button_start.fallingEdge()) { b_start = 1; u = 1; } else if (button_start.risingEdge()) { b_start = 0; u = 1;}
-  if (button_stop.fallingEdge()) { b_stop = 1; u = 1;} else if (button_stop.risingEdge()) { b_stop = 0; u = 1;}
   if (button_feed.fallingEdge()) { b_feed = 1; u = 1;} else if (button_feed.risingEdge()) { b_feed = 0; u = 1;}
-  if (button_m1.fallingEdge()) { b_m1 = 1; u = 1;} else if (button_m1.risingEdge()) { b_m1 = 0; u = 1;}
   if (button_fov.fallingEdge()) { b_fov = 1; uov = 1;} else if (button_fov.risingEdge()) { b_fov = 0; uov = 1;}
   if (button_sov.fallingEdge()) { b_sov = 1; uov = 1;} else if (button_sov.risingEdge()) { b_sov = 0; uov = 1;}
+
+/*
+ * Additional possible functions via keyboard shortcuts:
+ * 
+ * F1 = peek at status tab
+ * 
+ * Esc or Alt-S = stop
+ * 
+ * Alt+Enter = MDI line focus
+ * 
+ * Alt+F = toggle Flood
+ * Alt+M = toggle Mist
+ * 
+ * 
+ */
+
+  // STOP is sent via emulated keyboard - ESC key
+  if (button_stop.fallingEdge()) {
+    b_stop = 1; 
+    Keyboard.press(KEY_ESC);
+    Keyboard.release(KEY_ESC);
+  } else if (button_stop.risingEdge()) { 
+    b_stop = 0; 
+  }
+
+  // STATUS PEEK is sent via emulated keyboard - F1 key
+  if (button_status.fallingEdge()) {
+    b_status = 1;
+    Keyboard.press(KEY_F1);
+  } else if (button_status.risingEdge()) {
+    b_status = 0;
+    Keyboard.release(KEY_F1);
+  }
+
+
 
   // 'BTN_0': "button.feedhold",
   // 'BTN_1': "button.cycle-start",
@@ -146,6 +179,9 @@ bool button_poll()
   // FEED HOLD and START are sent via the HID descriptor
   Tormach.button(0, b_feed);
   Tormach.button(1, b_start);
+
+    
+ 
 
   if (uov) {
     // B_FOV is the button that changes the encoder from MAXVEL to FEED OVERRIDE
@@ -239,17 +275,4 @@ void loop()
 
 }
 
-/*
- * Additional possible functions via keyboard shortcuts:
- * 
- * F1 = peek at status tab
- * 
- * Esc or Alt-S = stop
- * 
- * Alt+Enter = MDI line focus
- * 
- * Alt+F = toggle Flood
- * Alt+M = toggle Mist
- * 
- * 
- */
+ 
