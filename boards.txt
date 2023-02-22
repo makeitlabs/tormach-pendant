@@ -725,6 +725,8 @@ teensy36.build.flags.S=-x assembler-with-cpp
 teensy36.build.flags.ld=-Wl,--gc-sections,--relax,--defsym=__rtc_localtime={extra.time.local} "-T{build.core.path}/mk66fx1m0.ld"
 teensy36.build.flags.libs=-larm_cortexM4lf_math -lm -lstdc++
 teensy36.serial.restart_cmd=false
+teensy36.menu.usb.tormach=Tormach Controller
+teensy36.menu.usb.tormach.build.usbtype=USB_TORMACH
 teensy36.menu.usb.serial=Serial
 teensy36.menu.usb.serial.build.usbtype=USB_SERIAL
 teensy36.menu.usb.serial.upload_port.usbtype=USB_SERIAL
@@ -962,6 +964,8 @@ teensy35.build.flags.S=-x assembler-with-cpp
 teensy35.build.flags.ld=-Wl,--gc-sections,--relax,--defsym=__rtc_localtime={extra.time.local} "-T{build.core.path}/mk64fx512.ld"
 teensy35.build.flags.libs=-larm_cortexM4lf_math -lm -lstdc++
 teensy35.serial.restart_cmd=false
+teensy35.menu.usb.tormach=Tormach Controller
+teensy35.menu.usb.tormach.build.usbtype=USB_TORMACH
 teensy35.menu.usb.serial=Serial
 teensy35.menu.usb.serial.build.usbtype=USB_SERIAL
 teensy35.menu.usb.serial.upload_port.usbtype=USB_SERIAL
@@ -1190,6 +1194,8 @@ teensy31.build.flags.S=-x assembler-with-cpp
 teensy31.build.flags.ld=-Wl,--gc-sections,--relax,--defsym=__rtc_localtime={extra.time.local} "-T{build.core.path}/mk20dx256.ld"
 teensy31.build.flags.libs=-larm_cortexM4l_math -lm -lstdc++
 teensy31.serial.restart_cmd=false
+teensy31.menu.usb.tormach=Tormach Controller
+teensy31.menu.usb.tormach.build.usbtype=USB_TORMACH
 teensy31.menu.usb.serial=Serial
 teensy31.menu.usb.serial.build.usbtype=USB_SERIAL
 teensy31.menu.usb.serial.upload_port.usbtype=USB_SERIAL
@@ -1430,6 +1436,8 @@ teensy30.build.flags.ldspecs=--specs=nano.specs
 teensy30.build.flags.libs=-larm_cortexM4l_math -lm -lstdc++
 teensy30.serial.restart_cmd=false
 
+teensy30.menu.usb.tormach=Tormach Controller
+teensy30.menu.usb.tormach.build.usbtype=USB_TORMACH
 teensy30.menu.usb.serial=Serial
 teensy30.menu.usb.serial.build.usbtype=USB_SERIAL
 teensy30.menu.usb.serial.upload_port.usbtype=USB_SERIAL
@@ -1606,7 +1614,6 @@ teensyLC.build.flags.libs=-larm_cortexM0l_math -lm -lstdc++
 teensyLC.serial.restart_cmd=false
 teensyLC.menu.usb.tormach=Tormach Controller
 teensyLC.menu.usb.tormach.build.usbtype=USB_TORMACH
-#teensyLC.menu.usb.tormach.fake_serial=teensy_gateway
 teensyLC.menu.usb.serial=Serial
 teensyLC.menu.usb.serial.build.usbtype=USB_SERIAL
 teensyLC.menu.usb.serial.upload_port.usbtype=USB_SERIAL

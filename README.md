@@ -2,7 +2,7 @@
 
 This is the 2023 version of the custom pendant built for the MakeIt Labs Tormach CNC mill.  Unlike the legacy version (circa 2017, contained in branch `pathpilot1-custom-integration`), which required extensive customization to PathPilot 1.x to function, this version emulates the official Tormach controls that have recently become available.  This means it works with unmodified versions of PathPilot 2.9.2 onward - a vast improvement, allowing us to keep the control software up-to-date without a tedious manual patching process each time.
 
-### Physical pendant based on Teensy LC
+### Physical pendant based on Teensy LC (or Teensy 3) hardware
 
   - physical CYCLE START, FEED HOLD, STOP buttons (potentially others)
   - physical rotary encoder for max velocity control 0-100%, good when proving new G-Code or for new users
@@ -10,6 +10,8 @@ This is the 2023 version of the custom pendant built for the MakeIt Labs Tormach
   - physical rotary encoder for spindle RPM override 0-200%
   - RGB LED status indicator for error conditions, ready, etc.
   - handheld pendant wheel support for step/continuous jogging of X,Y,Z,A axes with various step distances
+
+Note that other Teensy 3 devices will work if you do some work to remap the pins appropriately.  The changes to the Teensy `cores` should work on any Teensy 3 or Teensy LC, but will not work on Teensy 4 unless the changes are ported.  To date only Teensy LC and Teensy 3.5 have been tested.
 
 ### Firmware Environment
 
