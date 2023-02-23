@@ -1,5 +1,7 @@
 ## Emulated Tormach PathPilot Operator Console Controls
 
+_R&D and Software by Steve Richardson (steve.richardson@makeitlabs.com)_
+
 This is the 2023 version of the custom pendant built for the MakeIt Labs Tormach CNC mill.  Unlike the legacy version (circa 2017, contained in branch `pathpilot1-custom-integration`), which required extensive customization to PathPilot 1.x to function, this version emulates the official Tormach controls that have recently become available.  This means it works with unmodified versions of PathPilot 2.9.2 onward - a vast improvement, allowing us to keep the control software up-to-date without a tedious manual patching process each time.
 
 ### Physical pendant based on Teensy LC (or Teensy 3) hardware
