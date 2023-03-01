@@ -1,4 +1,5 @@
-// work-in-progress R&D for new Tormach Operator Console emulation mode
+// Tormach Operator Console emulation mode with enhanced features
+// 2023 version replaces the original version built in 2017
 //
 // 2023-FEB-26 Steve Richardson (steve.richardson@makeitlabs.com)
 //
@@ -8,6 +9,8 @@
 
 #include <Encoder.h>
 #include <Bounce.h>
+#include <WS2812Serial.h>
+#define USE_WS2812SERIAL
 #include <FastLED.h>
 
 #define PIN_BTN_V 0
@@ -22,13 +25,13 @@
 #define PIN_ENCODER_S_A 7
 #define PIN_ENCODER_S_B 8
 
-#define PIN_JOG_A 14
-#define PIN_JOG_B 15
+#define PIN_BTN_START 9
+#define PIN_BTN_FEEDHOLD 10
+#define PIN_BTN_STOP 11
+#define PIN_BTN_COOLANT 12
 
-
-#define NUM_RGB_LEDS 12
-#define PIN_RGB_LED_DOUT 32
-
+#define NUM_RGB_LEDS 36
+#define PIN_RGB_LED_DOUT 33
 
 CRGB rgb_leds[NUM_RGB_LEDS];
 
@@ -40,17 +43,20 @@ Bounce button_vel = Bounce(PIN_BTN_V, 10);
 Bounce button_feed = Bounce(PIN_BTN_F, 10);
 Bounce button_speed = Bounce(PIN_BTN_S, 10);
 
+Bounce button_start = Bounce(PIN_BTN_START, 10);
+Bounce button_feedhold = Bounce(PIN_BTN_FEEDHOLD, 10);
+Bounce button_stop = Bounce(PIN_BTN_STOP, 10);
+Bounce button_coolant = Bounce(PIN_BTN_COOLANT, 10);
 
-
-#define ENC_VEL_MAX 31
+#define ENC_VEL_MAX 32
 #define ENC_VEL_INIT 0
 #define ENC_VEL_DEFAULT 0
 
-#define ENC_FEED_MAX 200
+#define ENC_FEED_MAX 199
 #define ENC_FEED_INIT 100
 #define ENC_FEED_DEFAULT 100
 
-#define ENC_SPEED_MAX 200
+#define ENC_SPEED_MAX 199
 #define ENC_SPEED_INIT 100
 #define ENC_SPEED_DEFAULT 100
 
@@ -61,13 +67,24 @@ void setup()
   pinMode(PIN_BTN_F, INPUT_PULLUP);
   pinMode(PIN_BTN_S, INPUT_PULLUP);
 
-  Tormach.begin();
-  Tormach.useManualSend(true);
+  pinMode(PIN_BTN_START, INPUT_PULLUP);
+  pinMode(PIN_BTN_FEEDHOLD, INPUT_PULLUP);
+  pinMode(PIN_BTN_STOP, INPUT_PULLUP);
+  pinMode(PIN_BTN_COOLANT, INPUT_PULLUP);
 
   enc_vel.write(ENC_VEL_INIT);
   enc_feed.write(ENC_FEED_INIT);
   enc_speed.write(ENC_SPEED_INIT);
 
+  LEDS.addLeds<WS2812SERIAL, PIN_RGB_LED_DOUT, BRG>(rgb_leds, NUM_RGB_LEDS);
+  LEDS.setBrightness(255);
+
+  for (int i=0; i< NUM_RGB_LEDS; i++) {
+    rgb_leds[i] = CRGB::Black;
+  }
+
+  Tormach.begin();
+  Tormach.useManualSend(true);
 }
 
 bool encoder_limit(int &inval, int maxval)
@@ -90,7 +107,9 @@ bool encoder_poll()
   
   static elapsedMillis elapsed_vel_pressed;
 
-  const int vel_lut[] = {10,20,31,41,51,61,72,82,92,102,113,123,133,153,205,256,307,358,409,460,512,563,614,665,716,767,818,870,921,972,1023};
+  const int vel_lut[] = {  0, 39, 49, 59, 69, 79, 89, 99,109,119,129,
+                         159,169,179,189,199,249,299,349,399,449,499,
+                         549,599,649,699,749,799,849,899,949,974,999};
   
   // check for encoder shaft button press, which resets values to default
   button_vel.update();
@@ -104,8 +123,8 @@ bool encoder_poll()
     }
   }
 
-
   button_feed.update();
+  
   if (button_feed.fallingEdge()) {
     enc_feed.write(ENC_FEED_DEFAULT);
   }
@@ -129,8 +148,14 @@ bool encoder_poll()
     last_feed = cur_feed;
     last_speed = cur_speed;
     updated=true;
-    //Serial.println(String("enc: V=") + cur_vel + String(" F=") + cur_feed + String(" S=") + cur_speed);
+
   }
+
+  bool up_v = rgb_v_update(cur_vel);
+  bool up_f = rgb_f_update(cur_feed);
+  bool up_s = rgb_s_update(cur_speed);
+  if (up_v || up_f || up_s)
+    FastLED.show();
  
   // 0 - ABS_X - feed-override - "F%" confirmed
   // 1 - ABS_Y - rpm-override - "S%" confirmed
@@ -154,70 +179,161 @@ bool encoder_poll()
   return updated;
 }
 
-void loop() 
+bool rgb_v_update(int cur_vel)
 {
-
-  //led_poll();
-  
-  //bool button_update = button_poll();
-  bool encoder_update = encoder_poll();
-  
-  //rgb_poll();
-
-  if (encoder_update) {
-    Tormach.send_now();
-  }
-
-}
-
-
-
-
-  /*
-  FastLED.addLeds<WS2812, PIN_RGB_LED_DOUT, GRB>(rgb_leds, NUM_RGB_LEDS);
-
-  FastLED.setBrightness(255);
-  for (int i=0; i< NUM_RGB_LEDS; i++) {
-    rgb_leds[i] = CRGB::Black;
-  }
-  */
-
-
-/*
-void rgb_poll()
-{
-  static int value = 0;
-  static bool flip = false;
-  
-  if (tic >= 200) {
-
-    for (int i=0; i < NUM_RGB_LEDS; i++) {
-      if (i < value) rgb_leds[i] = CRGB::Blue;
-      else if (i == value) rgb_leds[i] = CRGB::White;
-      else rgb_leds[i] = CRGB::Black;
-    }
-
-    FastLED.show();
+  static int last_cur_vel = -32768;
+  static elapsedMillis elapsed;
+  static uint16_t period = 250;
+  static bool flipper = false;
+  bool flipped = false;
+  bool updated = false;
     
-    tic = 0;
-
-    if (flip) {
-      value--;
-      if (value == 0) {
-        flip = !flip;      
-      }
-    } else {
-      value++;
-      if (value == 11) {
-        flip = !flip;
-      }
-    }
+  if (elapsed >= period) {
+    flipped = true;
+    flipper = !flipper;
+    elapsed = 0;
   }
-}
-*/
 
- 
-/*
+  if (cur_vel != last_cur_vel || flipped) {
+    updated = true;
+    CHSV color0;
+    CHSV color1;
+    CHSV color2;
+  
+    
+    int value = cur_vel;
+  
+    if (cur_vel >= 0 && cur_vel < 11) {
+      // blue/violet - slowest speeds
+      if (cur_vel == 0) {
+        period = 500;
+        color1 = flipper ? CHSV(0,255,255) : CHSV(170,255,255);
+        color2 = CHSV(185,255,255);
+        color0 = flipper ? CHSV(170,255,255) : CHSV(0,255,255);
+      } else {
+        period = 100;
+        color1 = CHSV(170,255,128);
+        color2 = flipper ? CHSV(185,255,255) : CHSV(0,255,255);
+        color0 = color1;
+      }
+    } else if (cur_vel >= 11 && cur_vel < 22) {
+      // yellow/orange - medium speeds
+      period = 100;
+      color1 = CHSV(36,255,192);
+      color2 = flipper ? CHSV(64,255,255) : CHSV(64,255,64);
+      color0 = color1;
+      value -= 10;
+    } else if (cur_vel >= 22 && cur_vel < 32) {
+      // green/aqua - fast speeds
+      period = 100;
+      color1 = CHSV(96,255,128);
+      color2 = flipper ? CHSV(128,255,255) : CHSV(128,255,64);
+      color0 = color1;
+      value -= 21;
+    } else {
+      period = 1000;
+      color1 = CHSV(96,255,255);
+      color2 = CHSV(96,255,255);
+      color0 = color1;
+    }
+    
+    for (int i=0; i < 12; i++) {
+      if (i == 0) rgb_leds[i] = color0;
+      else if (i != value) rgb_leds[i] = color1;
+      else if (i == value) rgb_leds[i] = color2;
+    }
+  
+    last_cur_vel = cur_vel;
+  }
+  return updated;
+}
+
+
+bool rgb_f_update(int cur_feed)
+{
+  static int last_cur_feed = -32768;
+  
+  static elapsedMillis elapsed;
+  static uint16_t period = 250;
+  static bool flipper = false;
+  bool flipped = false;
+  bool updated = false;
+    
+  if (elapsed >= period) {
+    flipped = true;
+    flipper = !flipper;
+    elapsed = 0;
+  }
+
+  if (cur_feed != last_cur_feed || flipped) {
+    updated = true;
+
+    CHSV color0;
+    CHSV color1;
+    CHSV color2;
+
+    int value = (cur_feed * 11 / ENC_FEED_MAX) + 1;
+    
+    color0 = CHSV(0,0,0);
+    color1 = CHSV(0,0,0);
+    color2 = CHSV(0,0, 255);
+        
+    for (int i=0; i < 12; i++) {
+      if (i == 0) rgb_leds[i + 12] = color0;
+      else if (i != value) rgb_leds[i + 12] = color1;
+      else if (i == value) rgb_leds[i + 12] = color2;
+    }
+  
+  
+    last_cur_feed = cur_feed;
+  }
+  return updated;
+}
+
+
+bool rgb_s_update(int cur_speed)
+{
+  static int last_cur_speed = -32768;
+  
+  static elapsedMillis elapsed;
+  static uint16_t period = 250;
+  static bool flipper = false;
+  bool flipped = false;
+  bool updated = false;
+  
+  if (elapsed >= period) {
+    flipped = true;
+    flipper = !flipper;
+    elapsed = 0;
+  }
+
+  if (cur_speed != last_cur_speed || flipped) {
+    updated = true;
+    CHSV color0;
+    CHSV color1;
+    CHSV color2;
+
+    int value = (cur_speed * 11 / ENC_FEED_MAX) + 1;
+    
+    color0 = CHSV(0,0,0);
+    color1 = CHSV(0,0,0);
+    color2 = CHSV(0,0,255);
+        
+    for (int i=0; i < 12; i++) {
+      if (i == 0) rgb_leds[i + 24] = color0;
+      else if (i != value) rgb_leds[i + 24] = color1;
+      else if (i == value) rgb_leds[i + 24] = color2;
+    }
+  
+  
+    last_cur_speed = cur_speed;
+  }
+
+  return updated;
+}
+
+
+
 bool led_poll()
 {
   int r = Tormach.update();
@@ -230,35 +346,36 @@ bool led_poll()
     // 'LED_SCROLLL': "led.red",    0x04
     // 'LED_COMPOSE': "led.green",  0x08
     // 'LED_KANA': "led.blue"       0x10
-     
+
+    /*
     digitalWrite(PIN_LED_START, !(leds & 0x01));
     digitalWrite(PIN_LED_RFID, !(leds & 0x02));
     digitalWrite(PIN_BEACON_RED, !(leds & 0x04));
     digitalWrite(PIN_BEACON_GREEN, !(leds & 0x08));
     digitalWrite(PIN_BEACON_BLUE, !(leds & 0x10));
-
+    */
+    
     return true;
   }
   return false;
 }
-*/
 
-/*
+/* 
+ * Note that the button inputs are pulled up and active low, however they are connected to normally closed pushbuttons, essentially making them active high
+ * This is done in hopes of improved noise immunity, as the inputs are tied to ground in normal state
+ */
 bool button_poll() 
 {
-  uint8_t u = 0, uov = 0;
+  uint8_t u = 0;
+  static uint8_t b_start=0, b_feedhold=0;
 
   button_start.update();
+  button_feedhold.update();
   button_stop.update();
-  button_feed.update();
-  button_status.update();
-  button_fov.update();
-  button_sov.update();
+  button_coolant.update();
   
-  if (button_start.fallingEdge()) { b_start = 1; u = 1; } else if (button_start.risingEdge()) { b_start = 0; u = 1;}
-  if (button_feed.fallingEdge()) { b_feed = 1; u = 1;} else if (button_feed.risingEdge()) { b_feed = 0; u = 1;}
-  if (button_fov.fallingEdge()) { b_fov = 1; uov = 1;} else if (button_fov.risingEdge()) { b_fov = 0; uov = 1;}
-  if (button_sov.fallingEdge()) { b_sov = 1; uov = 1;} else if (button_sov.risingEdge()) { b_sov = 0; uov = 1;}
+  if (button_start.risingEdge()) { b_start = 1; u = 1; } else if (button_start.fallingEdge()) { b_start = 0; u = 1;}
+  if (button_feedhold.risingEdge()) { b_feedhold = 1; u = 1;} else if (button_feedhold.fallingEdge()) { b_feedhold = 0; u = 1;}
 
  // Additional possible functions via keyboard shortcuts:
  // F1 = peek at status tab
@@ -268,25 +385,29 @@ bool button_poll()
  // Alt+M = toggle Mist
 
   // STOP is sent via emulated keyboard - ESC key
-  if (button_stop.fallingEdge()) {
-    b_stop = 1; 
-    Keyboard.press(KEY_ESC);
-    Keyboard.release(KEY_ESC);
-  } else if (button_stop.risingEdge()) { 
-    b_stop = 0; 
+  if (button_stop.risingEdge()) {
+    Keyboard.set_modifier(0);
+    Keyboard.send_now();
+    Keyboard.set_key1(KEY_ESC);
+    Keyboard.send_now();
+    delay(50);
+    Keyboard.set_key1(0);
+    Keyboard.send_now();
   }
 
-  // STATUS PEEK is sent via emulated keyboard - F1 key
-  if (button_status.fallingEdge()) {
-    b_status = 1;
-    Keyboard.press(KEY_F1);
-  } else if (button_status.risingEdge()) {
-    b_status = 0;
-    Keyboard.release(KEY_F1);
+  // COOLANT TOGGLE is sent via emulated keyboard - Alt+M for mist and Alt+F for flood
+  if (button_coolant.risingEdge()) {
+    Keyboard.set_modifier(MODIFIERKEY_ALT);
+    Keyboard.send_now();
+    Keyboard.set_key1(KEY_F);
+    Keyboard.send_now();
+    delay(50);
+    Keyboard.set_key1(0);
+    Keyboard.send_now();
+    Keyboard.set_modifier(0);
+    Keyboard.send_now();
   }
-
-
-
+  
   // 'BTN_0': "button.feedhold",
   // 'BTN_1': "button.cycle-start",
   // 'BTN_2': "button.hold2run",
@@ -296,26 +417,25 @@ bool button_poll()
   // 'BTN_6': "button.pendant-2",
 
   // FEED HOLD and START are sent via the HID descriptor
-  Tormach.button(0, b_feed);
+  Tormach.button(0, b_feedhold);
   Tormach.button(1, b_start);
-
-    
- 
-
-  if (uov) {
-    // B_FOV is the button that changes the encoder from MAXVEL to FEED OVERRIDE
-    // B_SOV is the button that changes the encoder from MAXVEL to SPINDLE RPM OVERRIDE
-    // when neither are pressed the encoder is MAXVEL (VOV)
-    if (b_fov == 0 && b_sov == 0) 
-      enc_val_idx = 0;
-    else if (b_fov == 0 && b_sov == 1) 
-      enc_val_idx = 1;
-    else if (b_fov == 1 && b_sov == 0) 
-      enc_val_idx = 2;
-    else 
-      enc_val_idx = 0;
-  }
     
   return u==1;
 }
-*/
+
+
+
+void loop() 
+{
+  static elapsedMillis elapsed;
+
+  led_poll();
+  
+  bool button_update = button_poll();
+  bool encoder_update = encoder_poll();
+  
+  if (button_update || encoder_update || elapsed >= 1000) {
+    elapsed = 0;
+    Tormach.send_now();
+  }
+}
