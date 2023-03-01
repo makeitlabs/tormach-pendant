@@ -83,6 +83,9 @@ void setup()
     rgb_leds[i] = CRGB::Black;
   }
 
+  
+  Serial4.begin(115200);
+
   Tormach.begin();
   Tormach.useManualSend(true);
 }
@@ -160,21 +163,11 @@ bool encoder_poll()
   // 0 - ABS_X - feed-override - "F%" confirmed
   // 1 - ABS_Y - rpm-override - "S%" confirmed
   // 2 - ABS_Z - rapid-override - "V%" confirmed (old "maxvel" equivalent)
-  // 3 - ABS_RX - axis-select - no response
-  // 4 - ABS_RY - step-select - no response
-  // 5 - ABS_MISC - pendant-knob
-  // 6 - ABS_WHEEL - jog-wheel
-  // 7 - ABS_GAS - jog-wheel-2
 
   Tormach.absolute(0, (cur_feed * 1023) / ENC_FEED_MAX);
   Tormach.absolute(1, (cur_speed * 1023) / ENC_SPEED_MAX);
   Tormach.absolute(2, vel_lut[cur_vel]);
 
-  Tormach.absolute(3, 1); // X axis
-  Tormach.absolute(4, 1); // 0.001
-  Tormach.absolute(5, 2); // knob=2
-  Tormach.absolute(6, 0); // jog
-  Tormach.absolute(7, 0); // jog-2
   
   return updated;
 }
@@ -423,7 +416,134 @@ bool button_poll()
   return u==1;
 }
 
+void set_tormach_mpg_abs()
+{
+    
 
+}
+
+#define RX_BUFLEN 64
+#define STATE_SER_IDLE 0
+#define STATE_SER_BTN 1
+#define STATE_SER_BTN_DONE 2
+#define STATE_SER_AXIS 3
+#define STATE_SER_AXIS_DONE 4
+#define STATE_SER_INC 5
+#define STATE_SER_INC_DONE 6
+#define STATE_SER_MPG 7
+#define STATE_SER_PARSED 8
+
+bool serial_poll()
+{
+  static char rx_buf[RX_BUFLEN];
+  static uint8_t rx_idx = 0;
+  static uint8_t state = STATE_SER_IDLE;
+
+  static bool r_btn;
+  static char r_axis;
+  static char r_inc;
+  static int r_mpg;
+  
+  while (Serial4.available() > 0) {
+    char rx_byte = Serial4.read();
+    switch(state) {
+      case STATE_SER_IDLE:
+        state = STATE_SER_BTN;
+        // fallthrough
+      case STATE_SER_BTN:
+        if (rx_byte == 'b') {
+          r_btn = false;
+          state = STATE_SER_BTN_DONE;
+        } else if (rx_byte == 'B') {
+          r_btn = true;
+          state = STATE_SER_BTN_DONE;
+        } else {
+          state = STATE_SER_IDLE;
+        }
+        break;
+      case STATE_SER_BTN_DONE:
+        if (rx_byte == ',') {
+          state = STATE_SER_AXIS;
+        } else {
+          state = STATE_SER_IDLE;
+        }
+        break;
+      case STATE_SER_AXIS:
+        if (rx_byte == 'X') {
+          r_axis = 1;
+          state = STATE_SER_AXIS_DONE;
+        } else if (rx_byte == 'Y') {
+          r_axis = 2;
+          state = STATE_SER_AXIS_DONE;
+        } else if (rx_byte == 'Z') {
+          r_axis = 3;
+          state = STATE_SER_AXIS_DONE;
+        } else {
+          state = STATE_SER_IDLE;
+        }
+        break;
+      case STATE_SER_AXIS_DONE:
+        if (rx_byte == ',') {
+          state = STATE_SER_INC;
+        } else {
+          state = STATE_SER_IDLE;
+        }
+        break;
+      case STATE_SER_INC:
+        if (rx_byte == 'S') {
+          r_inc = 0;
+          state = STATE_SER_INC_DONE;
+        } else if (rx_byte == 'M') {
+          r_inc = 1;
+          state = STATE_SER_INC_DONE;
+        } else if (rx_byte == 'L') {
+          r_inc = 2;
+          state = STATE_SER_INC_DONE;
+        } else {
+          state = STATE_SER_IDLE;
+        }
+        break;
+      case STATE_SER_INC_DONE:
+        if (rx_byte == ',') {
+          state = STATE_SER_MPG;
+        } else {
+          state = STATE_SER_IDLE;
+        }
+        break;
+      case STATE_SER_MPG:
+        if (rx_idx < RX_BUFLEN-2 && rx_byte != '\n' && rx_byte != '\r') {
+          rx_buf[rx_idx++] = rx_byte;
+        } else if (rx_byte == '\n') {
+          rx_buf[rx_idx] = '\0';
+          rx_idx = 0;
+
+          r_mpg = atoi(rx_buf);
+          
+          state = STATE_SER_PARSED;
+        }
+        break;
+      case STATE_SER_PARSED:
+        // 3 - ABS_RX - axis-select
+        // 4 - ABS_RY - step-select
+        // 5 - ABS_MISC - pendant-knob
+        // 6 - ABS_WHEEL - jog-wheel
+        // 7 - ABS_GAS - jog-wheel-2
+        Tormach.absolute(3, r_axis);
+        Tormach.absolute(4, r_inc);
+        Tormach.absolute(5, 2); // knob=2
+        Tormach.absolute(6, r_mpg);
+        Tormach.absolute(7, 0); // jog-2
+
+        // 'BTN_5': "button.pendant-1",
+        Tormach.button(5, r_btn);
+
+        state = STATE_SER_IDLE;
+        return true;
+        break;
+    }
+  }
+  return false;
+}
 
 void loop() 
 {
@@ -433,8 +553,9 @@ void loop()
   
   bool button_update = button_poll();
   bool encoder_update = encoder_poll();
+  bool mpg_update = serial_poll();
   
-  if (button_update || encoder_update || elapsed >= 1000) {
+  if (button_update || encoder_update|| mpg_update) {
     elapsed = 0;
     Tormach.send_now();
   }
