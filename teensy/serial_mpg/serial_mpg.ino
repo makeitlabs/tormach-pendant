@@ -61,6 +61,8 @@ void setup() {
   pinMode(PIN_SEL_INC_0, INPUT_PULLUP);
   pinMode(PIN_SEL_INC_1, INPUT_PULLUP);
   pinMode(PIN_BTN, INPUT_PULLUP);
+
+  oled_setup();
 }
 
 void loop() {
@@ -79,6 +81,11 @@ void loop() {
   btn.update();
   if (btn.risingEdge()) { btn_pressed=false; bup=1; } else if (btn.fallingEdge()) { btn_pressed=true; bup=1; }
 
+  if (!btn_pressed) {
+    enc_mpg.write(last_mpg);
+    cur_mpg = last_mpg;  
+  }
+
   sel_axis_0.update();
   sel_axis_1.update();
   
@@ -92,7 +99,9 @@ void loop() {
 
   axis_sel = (bit_a1 << 1) | bit_a0;
   inc_sel = (bit_i1 << 1) | bit_i0;
-   
+
+  oled_update(axis_lut[axis_sel], aup, inc_lut[inc_sel], iup, btn_pressed, bup, cur_mpg, cur_mpg != last_mpg);
+
   if (aup || iup || bup || cur_mpg != last_mpg) {
     Serial1.println(String() + (btn_pressed ? "B," : "b,") + axis_lut[axis_sel] + "," + inc_lut[inc_sel] + "," + cur_mpg);
     last_mpg = cur_mpg;
