@@ -100,7 +100,7 @@ void loop() {
   axis_sel = (bit_a1 << 1) | bit_a0;
   inc_sel = (bit_i1 << 1) | bit_i0;
 
-  oled_update(axis_lut[axis_sel], aup, inc_lut[inc_sel], iup, btn_pressed, bup, cur_mpg, cur_mpg != last_mpg);
+  oled_update(axis_lut[axis_sel], aup, inc_lut[inc_sel], iup, btn_pressed, bup, cur_mpg, cur_mpg / 4!= last_mpg / 4);
 
   if (aup || iup || bup || cur_mpg != last_mpg) {
     Serial1.println(String() + (btn_pressed ? "B," : "b,") + axis_lut[axis_sel] + "," + inc_lut[inc_sel] + "," + cur_mpg);

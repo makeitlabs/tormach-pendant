@@ -106,7 +106,7 @@ void oled_update(char axis, bool axis_updated, char inc, bool inc_updated, bool 
       display.print(F("0.0100\""));
       display.setTextSize(1);
       display.setCursor(40, 24);
-      display.print(F("HUNDREDTHS"));
+      display.print(F("TEN THOU"));
       break;
     default:
       break;
@@ -145,9 +145,9 @@ void oled_update(char axis, bool axis_updated, char inc, bool inc_updated, bool 
       display.setTextColor(SH110X_WHITE);
       if (!mpg_updated) {
         display.print("JOG ACTIVE");
-      } else if (mpg > last_mpg) {
+      } else if (mpg / 4 > last_mpg / 4) {
         display.print("       >>>");
-      } else if (mpg < last_mpg) {
+      } else if (mpg / 4 < last_mpg / 4) {
         display.print("<<<");
       }
   } else {
