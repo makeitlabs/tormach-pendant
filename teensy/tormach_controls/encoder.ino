@@ -74,8 +74,6 @@ bool encoder_poll()
   static int last_vel=-1, last_feed=-1, last_speed=-1;
   bool updated = false;
   
-  static elapsedMillis elapsed_vel_pressed;
-
   const int vel_lut[] = {  0, 39, 49, 59, 69, 79, 89, 99,109,119,129,
                          159,169,179,189,199,249,299,349,399,449,499,
                          549,599,649,699,749,799,849,899,949,974,999};
@@ -83,12 +81,12 @@ bool encoder_poll()
   // check for encoder shaft button press, which resets values to default
   button_vel.update();
   if (button_vel.fallingEdge()) {
-    elapsed_vel_pressed=0;
-  } else if (button_vel.risingEdge()) {
-    if (elapsed_vel_pressed >= 500) {
-      enc_vel.write(ENC_VEL_MAX);
-    } else if (elapsed_vel_pressed > 100 && elapsed_vel_pressed < 500) {
+    int v = vel_lut[enc_vel.read()];
+
+    if (v >= 500) {
       enc_vel.write(ENC_VEL_DEFAULT);
+    } else {
+      enc_vel.write(ENC_VEL_MAX);
     }
   }
 
@@ -120,11 +118,17 @@ bool encoder_poll()
 
   }
 
-  bool up_v = rgb_v_update(cur_vel);
-  bool up_f = rgb_f_update(cur_feed);
-  bool up_s = rgb_s_update(cur_speed);
-  if (up_v || up_f || up_s)
-    rgb_show();
+  // returns true if the machine is e-stopped or spindle locked
+  if (!rgb_offline_update()) {
+    bool up_v = rgb_v_update(cur_vel);
+    bool up_f = rgb_f_update(cur_feed);
+    bool up_s = rgb_s_update(cur_speed);
+    if (up_v || up_f || up_s)
+      rgb_show();
+  } else {
+      rgb_show();
+  }
+
  
   // 0 - ABS_X - feed-override - "F%" confirmed
   // 1 - ABS_Y - rpm-override - "S%" confirmed

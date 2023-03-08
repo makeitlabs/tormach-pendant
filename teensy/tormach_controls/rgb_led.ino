@@ -68,6 +68,37 @@ bool rgb_status_led_poll()
   return false;
 }
 
+bool rgb_offline_update()
+{
+  static elapsedMillis elapsed;
+  static uint16_t period = 125;
+  static uint8_t spinner = 0;
+
+  if ((tool_enabled && !spindle_enabled) || !tool_enabled) {
+
+    if (elapsed >= period) {
+      elapsed = 0;
+      spinner++;
+      if (spinner>=12) spinner = 0;
+    }
+  
+    if ((tool_enabled && !spindle_enabled) || !tool_enabled) {
+      for (int i=0; i < 12; i++) {
+        rgb_leds[i] = CRGB::Black;
+        rgb_leds[i+12] = CRGB::Black;
+        rgb_leds[i+24] = CRGB::Black;
+      }
+      if (!tool_enabled) {
+        rgb_leds[spinner] = CRGB::Red;
+        rgb_leds[spinner+12] = CRGB::Green;
+        rgb_leds[spinner+24] = CRGB::Blue;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 
 bool rgb_v_update(int cur_vel)
 {
@@ -102,21 +133,21 @@ bool rgb_v_update(int cur_vel)
       } else {
         period = 100;
         color1 = CHSV(170,255,128);
-        color2 = flipper ? CHSV(185,255,255) : CHSV(0,255,255);
+        color2 = flipper ? CHSV(185,255,255) : CHSV(185,255,240);
         color0 = color1;
       }
     } else if (cur_vel >= 11 && cur_vel < 22) {
       // yellow/orange - medium speeds
       period = 100;
       color1 = CHSV(36,255,192);
-      color2 = flipper ? CHSV(64,255,255) : CHSV(64,255,64);
+      color2 = flipper ? CHSV(64,255,255) : CHSV(64,255,240);
       color0 = color1;
       value -= 10;
     } else if (cur_vel >= 22 && cur_vel < 32) {
       // green/aqua - fast speeds
       period = 100;
       color1 = CHSV(96,255,128);
-      color2 = flipper ? CHSV(128,255,255) : CHSV(128,255,64);
+      color2 = flipper ? CHSV(128,255,255) : CHSV(128,255,240);
       color0 = color1;
       value -= 21;
     } else {
@@ -143,7 +174,9 @@ bool rgb_f_update(int cur_feed)
   static int last_cur_feed = -32768;
   
   static elapsedMillis elapsed;
-  static uint16_t period = 250;
+  static uint16_t period = 50;
+  static uint8_t sat = 0;
+  static bool sat_flip = false;
   static bool flipper = false;
   bool flipped = false;
   bool updated = false;
@@ -152,6 +185,14 @@ bool rgb_f_update(int cur_feed)
     flipped = true;
     flipper = !flipper;
     elapsed = 0;
+
+    if (sat_flip) {
+      sat-=8;
+      if (sat == 0) sat_flip = !sat_flip;  
+    } else {
+      sat+=8;
+      if (sat >= 248) sat_flip = !sat_flip;
+    }
   }
 
   if (cur_feed != last_cur_feed || flipped) {
@@ -165,14 +206,17 @@ bool rgb_f_update(int cur_feed)
     
     color0 = CHSV(0,0,0);
     color1 = CHSV(0,0,0);
-    color2 = CHSV(0,0, 255);
+    if (cur_feed != ENC_FEED_DEFAULT) {
+      color2 = CHSV(0,sat,255);
+    } else {
+      color2 = CHSV(0,0,255);
+    }
         
     for (int i=0; i < 12; i++) {
       if (i == 0) rgb_leds[i + 12] = color0;
       else if (i != value) rgb_leds[i + 12] = color1;
       else if (i == value) rgb_leds[i + 12] = color2;
     }
-  
   
     last_cur_feed = cur_feed;
   }
@@ -185,7 +229,9 @@ bool rgb_s_update(int cur_speed)
   static int last_cur_speed = -32768;
   
   static elapsedMillis elapsed;
-  static uint16_t period = 250;
+  static uint16_t period = 50;
+  static uint8_t sat = 0;
+  static bool sat_flip = false;
   static bool flipper = false;
   bool flipped = false;
   bool updated = false;
@@ -194,6 +240,14 @@ bool rgb_s_update(int cur_speed)
     flipped = true;
     flipper = !flipper;
     elapsed = 0;
+
+    if (sat_flip) {
+      sat-=8;
+      if (sat == 0) sat_flip = !sat_flip;  
+    } else {
+      sat+=8;
+      if (sat >= 248) sat_flip = !sat_flip;
+    }
   }
 
   if (cur_speed != last_cur_speed || flipped) {
@@ -206,7 +260,11 @@ bool rgb_s_update(int cur_speed)
     
     color0 = CHSV(0,0,0);
     color1 = CHSV(0,0,0);
-    color2 = CHSV(0,0,255);
+    if (cur_speed != ENC_SPEED_DEFAULT) {
+      color2 = CHSV(0,sat,255);
+    } else {
+      color2 = CHSV(0,0,255);
+    }
         
     for (int i=0; i < 12; i++) {
       if (i == 0) rgb_leds[i + 24] = color0;
